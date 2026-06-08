@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Jornadas - Blip & Eurocuida</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Cores Eurofarma / Eurocuida */
+            --brand-primary: #0032A0; 
+            --brand-secondary: #FFC72C;
+            --brand-light: #e6effa;
+            
+            /* Cores Blip / Sistema */
+            --azul-blip: #0091FF;
+            --dark-blip: #1A2433;
+            --bg-whatsapp: #efeae2;
+            --balao-bot: #ffffff;
+            --balao-user: #d9fdd3;
+            --txt-main: #111b21;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--dark-blip) 0%, #0d1520 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Header com Logos (Fundo Branco e Distribuição) */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 1100px;
+            padding: 20px 40px;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .header-logo {
+            height: auto;
+            max-height: 45px;
+            max-width: 25%;
+            object-fit: contain;
+        }
+
+        /* Destaque específico para ampliar o logo da Eurofarma */
+        .logo-destaque {
+            max-height: 85px; 
+            max-width: 35%;
+        }
+
+        /* Layout Principal */
+        main {
+            display: flex;
+            width: 100%;
+            max-width: 1100px;
+            gap: 40px;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        /* Painel de Controle Lateral */
+        .control-panel {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .control-panel h2 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: var(--brand-secondary);
+            font-weight: 600;
+        }
+
+        .control-panel p {
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        /* Scroll no painel de botões */
+        .button-group {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .button-group::-webkit-scrollbar { width: 6px; }
+        .button-group::-webkit-scrollbar-track { background: transparent; }
+        .button-group::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+        .journey-btn {
+            width: 100%;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            color: #fff;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .journey-btn:hover { background: rgba(255, 255, 255, 0.1); }
+        .journey-btn.active { 
+            border-color: var(--brand-secondary); 
+            background: rgba(255, 199, 44, 0.12); 
+        }
+
+        .journey-btn h3 { font-size: 0.95rem; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; }
+        .journey-btn p { font-size: 0.8rem; color: #94a3b8; margin-bottom: 0; line-height: 1.4; }
+
+        /* Simulador de Smartphone */
+        .phone-container {
+            width: 385px;
+            height: 700px;
+            background: #000000;
+            border-radius: 44px;
+            padding: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);
+            border: 4px solid #334155;
+            position: relative;
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: var(--bg-whatsapp);
+            border-radius: 32px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Topbar do WhatsApp */
+        .wa-header {
+            background: var(--brand-primary);
+            padding: 35px 15px 12px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 2;
+        }
+
+        .wa-avatar {
+            width: 38px; height: 38px; background: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; color: var(--brand-primary); font-size: 0.9rem;
+        }
+
+        .wa-info h4 { font-size: 0.95rem; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+        .wa-info p { font-size: 0.7rem; color: #e6effa; }
+        .wa-badge { background: #25D366; width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+        /* Corpo do Chat */
+        .wa-chat-body {
+            flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth;
+        }
+
+        /* Balões de Mensagem */
+        .msg {
+            max-width: 85%; padding: 9px 12px; font-size: 0.85rem; position: relative; line-height: 1.4;
+            color: var(--txt-main); box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+        }
+        .msg-bot { background: var(--balao-bot); align-self: flex-start; border-radius: 0px 12px 12px 12px; }
+        .msg-user { background: var(--balao-user); align-self: flex-end; border-radius: 12px 0px 12px 12px; }
+        .msg-time { font-size: 0.65rem; color: #8696a0; text-align: right; margin-top: 4px; display: block; }
+
+        /* Componentes Meta UI */
+        .meta-list-container {
+            margin-top: 8px; border-top: 1px solid #e9ecef; padding-top: 8px; display: flex; flex-direction: column; gap: 4px;
+        }
+        .meta-list-header { font-size: 0.75rem; font-weight: 600; color: #667781; padding: 4px 0; text-transform: uppercase; }
+        .meta-menu-option {
+            background: #f8f9fa; border: 1px solid #e9ecef; padding: 10px 12px; border-radius: 8px;
+            font-size: 0.85rem; color: var(--brand-primary); font-weight: 500; cursor: pointer; transition: all 0.2s;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .meta-menu-option:hover { background: var(--brand-light); border-color: var(--brand-primary); }
+        .meta-menu-option::after { content: "➔"; font-size: 0.75rem; opacity: 0.7; }
+
+        .meta-buttons-inline { display: flex; gap: 6px; margin-top: 8px; border-top: 1px solid #e9ecef; padding-top: 8px; flex-wrap: wrap; }
+        .meta-btn-quick {
+            flex: 1; min-width: 80px; background: #ffffff; color: var(--brand-primary); border: 1px solid #e9ecef;
+            padding: 8px; border-radius: 20px; font-weight: 500; font-size: 0.8rem; cursor: pointer; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: background 0.2s;
+        }
+        .meta-btn-quick:hover { background: #f0f2f5; border-color: var(--brand-primary); }
+
+        .doc-preview {
+            background: #f0f2f5; border-radius: 6px; padding: 8px; display: flex; align-items: center; gap: 10px; margin-bottom: 4px; border-left: 4px solid var(--brand-secondary);
+        }
+
+        /* Footer Input do WP */
+        .wa-footer { background: #f0f2f5; padding: 10px; display: flex; align-items: center; gap: 10px; z-index: 2; }
+        .wa-input-mock { flex: 1; background: white; padding: 9px 15px; border-radius: 20px; font-size: 0.85rem; color: #667781; }
+        .wa-mic-mock {
+            width: 36px; height: 36px; background: var(--brand-primary); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; color: white;
+        }
+
+        .reset-btn {
+            margin-top: 15px; background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #a0aec0; padding: 8px 16px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s;
+        }
+        .reset-btn:hover { color: white; border-color: white; }
+
+        /* Estilos do Componente WA Flows */
+        .flows-overlay {
+            position: absolute; bottom: 0; left: 0; right: 0; top: 0;
+            background: rgba(0,0,0,.4); z-index: 50;
+            border-radius: 0 0 32px 32px;
+            display: none; flex-direction: column; justify-content: flex-end;
+        }
+        .flows-sheet {
+            background: #fff; border-radius: 16px 16px 0 0;
+            overflow: hidden; display: flex; flex-direction: column; max-height: 90%;
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .flows-drag { background: #f0f2f5; padding: 7px 0 4px; display: flex; justify-content: center; flex-shrink: 0; }
+        .flows-drag-pill { width: 34px; height: 4px; background: #ccc; border-radius: 4px; }
+        .flows-topbar {
+            background: #f0f2f5; display: flex; align-items: center; justify-content: space-between;
+            padding: 3px 12px 8px; flex-shrink: 0;
+        }
+        .f-cancel { font-size: 13px; color: #555; font-family: -apple-system, sans-serif; cursor: pointer;}
+        .f-title { font-size: 14px; font-weight: 600; color: #111; font-family: -apple-system, sans-serif; }
+        .f-more { font-size: 17px; color: #555; font-family: -apple-system, sans-serif; }
+        .flows-scroll { overflow-y: auto; overflow-x: hidden; padding: 15px 14px; flex: 1; }
+        .flows-foot { padding: 9px 14px; border-top: 1px solid #f0f0f0; flex-shrink: 0; text-align: center; font-size: 11px; color: #aaa; font-family: -apple-system, sans-serif; }
+        
+        .flow-label {
+            font-size: 12px; color: #555; margin-bottom: 4px; display: block; font-weight: 600;
+        }
+        .flow-input {
+            width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #ccc;
+            border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 13.5px;
+            color: #111; outline: none; transition: border-color 0.2s; background: #fff;
+        }
+        .flow-input:focus { border-color: var(--brand-primary); }
+        .f-cta {
+            background: var(--brand-primary); color: #fff; border: none; border-radius: 8px;
+            padding: 13px; width: 100%; font-size: 15px; font-weight: 600;
+            font-family: -apple-system, sans-serif; cursor: pointer; margin-top: 10px;
+        }
+        .f-cta:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <img src="eurofarma-600x315.png" alt="Eurofarma" class="header-logo logo-destaque">
+        <img src="Eurocuida_logo.png" alt="Eurocuida" class="header-logo">
+        <img src="Marca-Blip-_blue-black-2.png" alt="Blip" class="header-logo">
+    </header>
+
+    <main>
+        <div class="control-panel">
+            <h2>Navegação Conversacional</h2>
+            <p>Selecione a jornada que deseja simular para ver a interação no modelo de WhatsApp, combinando extração cognitiva e menus nativos.</p>
+            
+            <div class="button-group">
+                <button class="journey-btn active" onclick="switchJourney('cadastro')">
+                    <h3>📝 1. Cadastro Direto via Flows</h3>
+                    <p>Coleta completa (10 campos) em tela única, incluindo portfólio exclusivo Eurofarma (Extensior, Poviztra).</p>
+                </button>
+
+                <button class="journey-btn" onclick="switchJourney('duvidas_caneta')">
+                    <h3>💉 2. Dúvidas (Caneta Emagrecedora)</h3>
+                    <p>Atendimento cognitivo interpretando dúvidas de regulagem e local de aplicação.</p>
+                </button>
+
+                <button class="journey-btn" onclick="switchJourney('farmacias')">
+                    <h3>🏥 3. Farmácias Credenciadas</h3>
+                    <p>Navegação por geolocalização utilizando List Messages para apresentar farmácias próximas.</p>
+                </button>
+
+                <button class="journey-btn" onclick="switchJourney('duvidas_programa')">
+                    <h3>💡 4. Dúvidas do Programa</h3>
+                    <p>Esclarecimento de perguntas frequentes sobre os descontos do Eurocuida usando NLP.</p>
+                </button>
+                
+                <button class="journey-btn" onclick="switchJourney('farmacovigilancia')" style="border-left: 4px solid #ef4444;">
+                    <h3>🚨 5. Farmacovigilância</h3>
+                    <p>Captura de eventos adversos com triagem de IA e handoff estruturado para equipe de saúde.</p>
+                </button>
+            </div>
+
+            <button class="reset-btn" onclick="resetChat()">🔄 Reiniciar Jornada Atual</button>
+        </div>
+
+        <div class="phone-container">
+            <div class="phone-screen">
+                
+                <div class="wa-header">
+                    <div class="wa-avatar">E</div>
+                    <div class="wa-info">
+                        <h4>Eurocuida <span class="wa-badge"></span></h4>
+                        <p>Conta comercial oficial</p>
+                    </div>
+                </div>
+
+                <div class="wa-chat-body" id="chatBody">
+                </div>
+
+                <div class="flows-overlay" id="registrationFlow">
+                    <div class="flows-sheet">
+                        <div class="flows-drag"><div class="flows-drag-pill"></div></div>
+                        <div class="flows-topbar">
+                            <span class="f-cancel" onclick="closeFlow()">Cancelar</span>
+                            <span class="f-title">Cadastre-se no Eurocuida</span>
+                            <span class="f-more">···</span>
+                        </div>
+                        <div class="flows-scroll">
+                            
+                            <label class="flow-label">Nome Completo</label>
+                            <input type="text" class="flow-input" value="João Silva">
+
+                            <label class="flow-label">CPF</label>
+                            <input type="text" class="flow-input" value="123.456.789-00">
+
+                            <label class="flow-label">Data de Nascimento</label>
+                            <input type="date" class="flow-input" value="1985-04-15">
+
+                            <label class="flow-label">E-mail</label>
+                            <input type="email" class="flow-input" value="joao.silva@email.com">
+
+                            <label class="flow-label">Telefone (WhatsApp)</label>
+                            <input type="tel" class="flow-input" value="(11) 98765-4321">
+                            
+                            <label class="flow-label">Senha</label>
+                            <input type="password" class="flow-input" placeholder="Crie uma senha para acessar o site">
+
+                            <label class="flow-label">CEP</label>
+                            <input type="text" class="flow-input" value="01234-567">
+
+                            <div style="display: flex; gap: 10px;">
+                                <div style="flex: 2;">
+                                    <label class="flow-label">CRM do Médico</label>
+                                    <input type="text" class="flow-input" placeholder="Ex: 123456">
+                                </div>
+                                <div style="flex: 1;">
+                                    <label class="flow-label">UF do CRM</label>
+                                    <select class="flow-input">
+                                        <option value="SP" selected>SP</option>
+                                        <option value="RJ">RJ</option>
+                                        <option value="MG">MG</option>
+                                        <option value="PR">PR</option>
+                                        <option value="SC">SC</option>
+                                        <option value="RS">RS</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <label class="flow-label">Produto (Medicamento)</label>
+                            <select class="flow-input">
+                                <option value="" disabled selected>Selecione a medicação Eurofarma</option>
+                                <option value="extensior">Extensior</option>
+                                <option value="extensior_xr">Extensior XR</option>
+                                <option value="poviztra">Poviztra</option>
+                                <option value="poviztra_d">Poviztra D</option>
+                            </select>
+
+                            <button class="f-cta" onclick="submitRegistrationFlow()">Finalizar Cadastro</button>
+                        </div>
+                        <div class="flows-foot">Protegido por criptografia de ponta a ponta.</div>
+                    </div>
+                </div>
+
+                <div class="wa-footer">
+                    <div class="wa-input-mock">Mensagem</div>
+                    <div class="wa-mic-mock">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const journeys = {
+            cadastro: [
+                {
+                    type: 'bot',
+                    text: 'Olá! Bem-vindo ao <b>Programa Eurocuida</b>. 💙💛<br><br>Para iniciar seu cadastro no nosso programa de descontos e garantir seus benefícios em poucos minutos, basta clicar no botão abaixo e preencher o formulário seguro:',
+                    buttons: [
+                        { text: '📝 Preencher Cadastro', isFlow: true }
+                    ]
+                },
+                {
+                    type: 'bot',
+                    text: 'Dados recebidos com sucesso! ✅<br><br>🎉 <b>Cadastro finalizado!</b><br><br>Você já faz parte do <b>Eurocuida</b>. Apresente seu CPF nas farmácias credenciadas para garantir seu desconto automático no seu tratamento. Posso ajudar com mais alguma coisa?',
+                    buttons: [
+                        { text: 'Dúvidas de uso', next: 2 },
+                        { text: 'Encerrar', next: 3 }
+                    ]
+                },
+                {
+                    type: 'bot',
+                    text: 'Temos uma equipe pronta para tirar todas as suas dúvidas sobre o Extensior ou o Poviztra. Como posso ajudar com sua caneta hoje?'
+                },
+                {
+                    type: 'bot',
+                    text: 'Atendimento encerrado. O Eurocuida está sempre à disposição para cuidar de você! 💙'
+                }
+            ],
+            duvidas_caneta: [
+                {
+                    type: 'bot',
+                    text: 'Olá! Sou o assistente de saúde do <b>Eurocuida</b>. Como posso te auxiliar no seu tratamento hoje?',
+                    actionSim: () => {
+                        setTimeout(() => {
+                            sendUserMessage("Como faço para regular a dose correta na minha caneta?");
+                            setTimeout(() => {
+                                sendBotMessage("<b>Entendi! Veja como regular a sua dose:</b> 💉<br><br>1. Retire a tampa da caneta.<br>2. Gire o seletor na extremidade da caneta até que o visor mostre a dose exata prescrita pelo seu médico (ex: 0.6, 1.2, etc).<br>3. Se passar da dose sem querer, basta girar o seletor para trás.<br><br>Sempre verifique o visor antes de aplicar. Ficou claro?", null, [
+                                    { text: 'Sim, ficou claro', next: 1 },
+                                    { text: 'Tenho outra dúvida', next: 1 }
+                                ]);
+                            }, 1800);
+                        }, 1500);
+                    }
+                },
+                {
+                    type: 'bot',
+                    text: 'Que bom! Posso ajudar com mais alguma dúvida sobre a aplicação?',
+                    actionSim: () => {
+                        setTimeout(() => {
+                            sendUserMessage("Onde no corpo eu aplico certinho?");
+                            setTimeout(() => {
+                                sendBotMessage("A aplicação deve ser feita por via subcutânea (sob a pele). Os melhores locais são:<br><br>🟢 <b>Abdômen</b> (área da barriga, evitando a região muito próxima ao umbigo).<br>🟢 <b>Coxas</b> (parte frontal).<br>🟢 <b>Braços</b> (parte superior).<br><br><i>Dica:</i> Alterne os locais de injeção todos os dias para evitar desconforto. Se precisar relatar algum efeito colateral, digite 'Colateral'.", null, [
+                                    { text: 'Relatar Colateral', next: 2 },
+                                    { text: 'Entendido!', next: 2 }
+                                ]);
+                            }, 1800);
+                        }, 1500);
+                    }
+                },
+                {
+                    type: 'bot',
+                    text: 'Sempre siga a orientação do seu médico. Obrigado por usar o Eurocuida!'
+                }
+            ],
+            farmacias: [
+                {
+                    type: 'bot',
+                    text: 'Precisa comprar sua medicação com desconto? Eu te ajudo a achar uma <b>Farmácia Credenciada</b> no Eurocuida! 🏥<br><br>Por favor, me envie a sua <b>localização</b> pelo clipe do WhatsApp ou digite o seu CEP.',
+                    actionSim: () => {
+                        setTimeout(() => {
+                            sendUserMessage("📍 Localização Compartilhada");
+                            setTimeout(() => {
+                                sendBotMessage("Buscando as farmácias mais próximas de você... 🔎", null, null, () => {
+                                    setTimeout(() => {
+                                        sendBotMessage("Encontrei opções pertinho de você! Clique no botão abaixo para ver a lista e escolher a farmácia desejada:", {
+                                            header: 'Farmácias Próximas',
+                                            options: [
+                                                { text: 'Droga Raia (800m)', next: 1 },
+                                                { text: 'Drogasil (1.2km)', next: 1 },
+                                                { text: 'Pague Menos (2.5km)', next: 1 }
+                                            ]
+                                        });
+                                    }, 1500);
+                                });
+                            }, 1000);
+                        }, 1500);
+                    }
+                },
+                {
+                    type: 'bot',
+                    text: '📍 <b>Excelente escolha!</b><br><br>A farmácia selecionada já faz parte da nossa rede. <br>Basta ir até o balcão, apresentar a sua <b>receita médica</b> e informar seu <b>CPF</b> cadastrado no Eurocuida para garantir seu desconto automático na compra da caneta. Boa saúde!'
+                }
+            ],
+            duvidas_programa: [
+                {
+                    type: 'bot',
+                    text: 'Olá! Você está na central de informações do <b>Programa Eurocuida</b>. Como posso te ajudar a entender melhor seus benefícios?',
+                    actionSim: () => {
+                        setTimeout(() => {
+                            sendUserMessage("Queria saber como funciona o plano de descontos de vocês");
+                            setTimeout(() => {
+                                sendBotMessage("O <b>Eurocuida</b> oferece descontos exclusivos e progressivos para pacientes em tratamento contínuo! 📉<br><br>Ao comprar o medicamento participante informando seu CPF, o desconto é aplicado diretamente no caixa da farmácia credenciada. O percentual pode variar dependendo da medicação e da sua etapa no tratamento.<br><br>Você tem mais alguma dúvida?", null, [
+                                    { text: 'Sim, tenho dúvida', next: 1 },
+                                    { text: 'Não, obrigado', next: 2 }
+                                ]);
+                            }, 1800);
+                        }, 1500);
+                    }
+                },
+                {
+                    type: 'bot',
+                    text: 'Pode perguntar! O que mais você gostaria de saber?',
+                    actionSim: () => {
+                        setTimeout(() => {
+                            sendUserMessage("Quem tem direito a participar do Eurocuida?");
+                            setTimeout(() => {
+                                sendBotMessage("<b>Todos os pacientes</b> que possuem uma <b>prescrição médica válida (receita)</b> para os medicamentos que fazem parte do portfólio da Eurofarma podem participar! 👨‍⚕️<br><br>Basta ter o CRM do seu médico em mãos e realizar o cadastro aqui comigo mesmo. Quer fazer seu cadastro agora?", null, [
+                                    { text: 'Fazer Cadastro', next: 2 },
+                                    { text: 'Agora não', next: 2 }
+                                ]);
+                            }, 1800);
+                        }, 1500);
+                    }
+                },
+                {
+                    type: 'bot',
+                    text: 'Tudo bem! Qualquer dúvida futura, estarei por aqui. Cuidar de você é o nosso principal objetivo. 💙'
+                }
+            ],
+            farmacovigilancia: [
+                {
+                    type: 'bot',
+                    text: 'Olá! A sua saúde e segurança são nossas maiores prioridades no Eurocuida. 🛡️<br><br>Caso esteja sentindo algum desconforto, evento adverso ou efeito colateral com a medicação, por favor, <b>descreva em poucas palavras o que está sentindo</b>.',
+                    actionSim: () => {
+                        setTimeout(() => {
+                            sendUserMessage("Estou sentindo muita náusea e um pouco de tontura desde que apliquei ontem à noite.");
+                            setTimeout(() => {
+                                sendBotMessage("Sinto muito que não esteja se sentindo bem. 😔<br><br>Nossa inteligência artificial registrou seu relato (<i>Náusea e Tontura</i>). Para que nossa equipe de saúde possa registrar o protocolo corretamente, como você classificaria a <b>intensidade</b> desse sintoma?", null, [
+                                    { text: '🟢 Leve', next: 1 },
+                                    { text: '🟡 Moderada', next: 1 },
+                                    { text: '🔴 Intensa', next: 1 }
+                                ]);
+                            }, 1800);
+                        }, 2500);
+                    }
+                },
+                {
+                    type: 'bot',
+                    text: 'Anotado. A náusea é um sintoma relatado por alguns pacientes na fase de adaptação. Recomendamos que você se mantenha hidratado e faça refeições menores.<br><br>📋 Acabei de gerar o protocolo de farmacovigilância corporativo <b>#FV-8849</b>.<br><br>Gostaria de falar com um de nossos <b>farmacêuticos ou enfermeiros</b> agora mesmo para receber orientações adicionais?',
+                    buttons: [
+                        { text: 'Falar com equipe', next: 2 },
+                        { text: 'Não precisa', next: 3 }
+                    ]
+                },
+                {
+                    type: 'bot',
+                    text: 'Entendido. Estou <b>transferindo você para a nossa equipe de saúde</b>. 👩‍⚕️👨‍⚕️<br><br>O tempo médio de espera é de 2 minutos. Por favor, aguarde na linha.'
+                },
+                {
+                    type: 'bot',
+                    text: 'Tudo bem. Seu relato foi registrado na nossa base de farmacovigilância. Se os sintomas persistirem, não hesite em procurar seu médico ou nos acionar novamente. Melhoras! 💙'
+                }
+            ]
+        };
+
+        let currentJourneyId = 'cadastro';
+        let currentStep = 0;
+
+        function switchJourney(key) {
+            currentJourneyId = key;
+            currentStep = 0;
+            document.querySelectorAll('.journey-btn').forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            closeFlow(); 
+            resetChat();
+        }
+
+        function resetChat() {
+            document.getElementById('chatBody').innerHTML = '';
+            currentStep = 0;
+            renderStep();
+        }
+
+        function renderStep() {
+            const journey = journeys[currentJourneyId];
+            if (currentStep >= journey.length) return;
+
+            const stepData = journey[currentStep];
+            if (stepData.type === 'bot') {
+                sendBotMessage(stepData.text, stepData.listMenu, stepData.buttons, stepData.actionSim);
+            }
+        }
+
+        function sendBotMessage(htmlText, listMenu = null, buttons = null, callback = null) {
+            const chatBody = document.getElementById('chatBody');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'msg msg-bot';
+            
+            let content = `<div>${htmlText}</div>`;
+            
+            // Componente List Message do WhatsApp
+            if (listMenu) {
+                content += `<div class="meta-list-container">`;
+                content += `<div class="meta-list-header">${listMenu.header}</div>`;
+                listMenu.options.forEach((opt) => {
+                    content += `<div class="meta-menu-option" onclick="handleMenuSelection('${opt.text}', ${opt.next})">${opt.text}</div>`;
+                });
+                content += `</div>`;
+            }
+
+            // Componente Quick Reply Buttons / Flow Trigger
+            if (buttons && buttons.length > 0) {
+                content += `<div class="meta-buttons-inline">`;
+                buttons.forEach((btn) => {
+                    if(btn.isFlow) {
+                        content += `<button class="meta-btn-quick" onclick="openRegistrationFlow()">${btn.text}</button>`;
+                    } else {
+                        content += `<button class="meta-btn-quick" onclick="handleMenuSelection('${btn.text}', ${btn.next})">${btn.text}</button>`;
+                    }
+                });
+                content += `</div>`;
+            }
+
+            const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            content += `<span class="msg-time">${time}</span>`;
+            
+            msgDiv.innerHTML = content;
+            chatBody.appendChild(msgDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            if (callback) callback();
+        }
+
+        function sendUserMessage(text) {
+            const chatBody = document.getElementById('chatBody');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'msg msg-user';
+            
+            const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            msgDiv.innerHTML = `<div>${text}</div><span class="msg-time">${time}</span>`;
+            
+            chatBody.appendChild(msgDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function handleMenuSelection(text, nextStep) {
+            sendUserMessage(text);
+            currentStep = nextStep;
+            setTimeout(() => {
+                renderStep();
+            }, 800);
+        }
+
+        // WhatsApp Flows Functions
+        function openRegistrationFlow() {
+            document.getElementById('registrationFlow').style.display = 'flex';
+        }
+
+        function closeFlow() {
+            document.getElementById('registrationFlow').style.display = 'none';
+        }
+
+        function submitRegistrationFlow() {
+            closeFlow();
+            sendUserMessage("Formulário Enviado");
+            
+            // Avança para o passo 1 (Conclusão)
+            currentStep = 1;
+            setTimeout(() => {
+                renderStep();
+            }, 800);
+        }
+
+        // Inicializa a primeira jornada
+        renderStep();
+    </script>
+</body>
+</html>
